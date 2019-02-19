@@ -9,7 +9,7 @@ else
 fi
 
 PVFS2_GENCONFIG="$PVFS2_HOME/bin/pvfs2-genconfig"
-CWD="$MRVIZ_HOME/orangefs_scripts"
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 servers=`awk '{printf("%s,",$1)}' servers`
 number=`awk 'END{print NR}' servers`
@@ -21,12 +21,22 @@ then
     sed -i "s/TroveSyncData.*/TroveSyncData yes/" $CWD/pvfs2-${number}N.conf
 fi
 
-first_server=`head -1 servers`
-echo "tcp://$first_server:3334/orangefs $MOUNT_POINT pvfs2 defaults,auto 0 0" > $PVFS2TAB_FILE
-
-server_list=`cat servers | awk '{print $1}'`
-for node in ${server_list[@]}
+clients=`cat clients | awk '{print $1}'`
+count=0
+for client in ${client[@]}
 do
-  rsync -az $CWD/pvfs2-${number}N.conf $node:$CWD/pvfs2-${number}N.conf
-  rsync -az $PVFS2TAB_FILE $node:$PVFS2TAB_FILE
+  metadata_server=`head -$count servers | tail -1`
+  ssh client "echo 'tcp://$metadata_server:3334/orangefs $MOUNT_POINT pvfs2 defaults,auto 0 0' > \$PVFS2TAB_FILE"
+  ((count=$count+1))
 done
+
+# sync files only on Chameleon
+if [ "$USER" == "cc" ]
+then
+  server_list=`cat servers | awk '{print $1}'`
+  for node in ${server_list[@]}
+  do
+    rsync -az $CWD/pvfs2-${number}N.conf $node:$CWD/pvfs2-${number}N.conf
+    rsync -az $PVFS2TAB_FILE $node:$PVFS2TAB_FILE
+  done
+fi

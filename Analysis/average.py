@@ -42,4 +42,4 @@ if __name__== "__main__":
       np.savetxt(sys.stdout, n, fmt = '%-6s')
       print ''
   else:
-    np.savetxt(sys.stdout, ave, fmt = '%-6s')
+    np.savetxt(sys.stdout, stddev, fmt = '%-6s')
