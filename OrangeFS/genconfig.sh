@@ -38,3 +38,10 @@ then
     rsync -az $PVFS2TAB_FILE $node:$PVFS2TAB_FILE
   done
 fi
+
+# replace hostname with high-speed one on Ares
+if [ "$USER" == "kfeng" ]
+then
+  sed -i 's/:\/\/ares-stor-/:\/\/172.25.201./' $CWD/pvfs2-${number}N.conf
+  sed -i 's/:\/\/ares-comp-/:\/\/172.25.101./' $CWD/pvfs2-${number}N.conf
+fi
