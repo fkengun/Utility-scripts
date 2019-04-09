@@ -34,6 +34,7 @@ do
   echo "cluster-node-timeout 5000" >> $port/$CONF_FILE
   echo "appendonly yes" >> $port/$CONF_FILE
   echo "protected-mode no" >> $port/$CONF_FILE
+  echo "logfile $PWD/$port/file.log" >> $port/$CONF_FILE
   ((i=i+1))
 done
 
