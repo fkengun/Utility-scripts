@@ -10,8 +10,6 @@ fi
 
 source ~/.bash_aliases
 
-CWD="$MRVIZ_HOME/orangefs_scripts"
-
 clients=`awk '{printf("%s,",$1)}' clients`
 
 #unmount pvfs2
@@ -20,8 +18,13 @@ mpssh -f $CWD/clients "sudo umount -f $MOUNT_POINT"
 mpssh -f $CWD/clients "sudo umount $MOUNT_POINT"
 
 #Kill client process
-mpssh -f $CWD/clients "sudo killall -9 pvfs2-client"
-mpssh -f $CWD/clients "sudo killall -9 pvfs2-client-core"
+if [[ ! -z $PVFS2_SRC_HOME ]]
+then
+  mpssh -f $CWD/clients "sudo killall -9 pvfs2-client"
+  mpssh -f $CWD/clients "sudo killall -9 pvfs2-client-core"
+else
+  mpssh -f $CWD/clients "sudo kill-pvfs2-client"
+fi
 
 # remove pvfs2 from kernel
 mpssh -f $CWD/clients "sudo rmmod pvfs2"

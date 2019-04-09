@@ -9,7 +9,6 @@ else
 fi
 
 PVFS2_GENCONFIG="$PVFS2_HOME/bin/pvfs2-genconfig"
-CWD="$MRVIZ_HOME/orangefs_scripts"
 
 servers=`awk '{printf("%s,",$1)}' servers`
 number=`awk 'END{print NR}' servers`

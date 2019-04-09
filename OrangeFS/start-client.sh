@@ -29,9 +29,14 @@ fi
 
 source ~/.bash_aliases
 
-KERNEL_DIR="$PVFS2_SRC_HOME/src/kernel/linux-2.6"
-CLIENT_DIR="$PVFS2_SRC_HOME/src/apps/kernel/linux"
-CWD="$MRVIZ_HOME/orangefs_scripts"
+if [[ ! -z $PVFS2_SRC_HOME ]]
+then
+  KERNEL_DIR="$PVFS2_SRC_HOME/src/kernel/linux-2.6"
+  CLIENT_DIR="$PVFS2_SRC_HOME/src/apps/kernel/linux"
+else
+  KERNEL_DIR="$PVFS2_HOME/lib/modules/`uname -r`/kernel/fs/pvfs2"
+  CLIENT_DIR="$PVFS2_HOME/sbin"
+fi
 
 clients=`awk '{print $1}' clients`
 
