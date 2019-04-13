@@ -13,3 +13,4 @@ do
   rm -rf $PWD/$port/*.aof $PWD/$port/*.rdb $PWD/$port/nodes.conf
   ((i=i+1))
 done
+echo "Previous Redis is cleaned"

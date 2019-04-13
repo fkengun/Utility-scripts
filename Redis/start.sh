@@ -1,11 +1,14 @@
 #!/bin/bash
 
-REDIS_DIR=~/pkg_src/redis-5.0.4
+REDIS_DIR=~/pkg_src/redis-3.2.13
+REDIS_VER=`$REDIS_DIR/src/redis-server -v | awk '{print $3}' | cut -d'=' -f2`
 CONF_FILE=redis.conf
 HOSTNAME_POSTFIX=-40g
 PWD=$(pwd)
 SERVERS=`cat servers | awk '{print $1}'`
 PORT_BASE=7000
+
+function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
 n_server=`cat servers | wc -l`
 if [ $((n_server%2)) -ne 0 ]
@@ -52,8 +55,18 @@ done
 mpssh -f servers 'pgrep -l redis-server'
 
 # Connect servers
+# for Redis 5 the command should be like redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 --cluster-replicas 1
+# for Redis 3 and 4, the command looks like ./redis-trib.rb create --replicas 1 127.0.0.1:7000 127.0.0.1:7001
 i=0
-cmd="$REDIS_DIR/src/redis-cli --cluster create "
+if version_gt $REDIS_VER "5.0"
+then
+  echo "Redis 5.x, using redis-cli ..."
+  cmd="$REDIS_DIR/src/redis-cli --cluster create "
+else
+  echo "Redis 3.x/4.x, using redis-trib.rb ..."
+  cmd="$REDIS_DIR/src/redis-trib.rb create --replicas 1 "
+fi
+
 for server in ${SERVERS[@]}
 do
   server_ip=$(getent ahosts $server$HOSTNAME_POSTFIX | grep STREAM | awk '{print $1}')
@@ -61,5 +74,8 @@ do
   cmd="${cmd}${server_ip}:${port} "
   ((i=i+1))
 done
-cmd="${cmd}--cluster-replicas 1"
+if version_gt $REDIS_VER "5.0"
+then
+  cmd="${cmd}--cluster-replicas 1"
+fi
 $cmd
