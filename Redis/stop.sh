@@ -1,4 +1,6 @@
 #!/bin/bash
 
-mpssh -f servers 'killall redis-server' > /dev/null
+PWD=~/pkg_src/Utility-scripts/Redis
+
+mpssh -f ${PWD}/servers 'killall redis-server' > /dev/null
 echo "Redis is stopped"

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 LOCAL_DIR=/mnt/hdd/kfeng/redis
-PWD=$(pwd)
-SERVERS=`cat servers | awk '{print $1}'`
+PWD=~/pkg_src/Utility-scripts/Redis
+SERVERS=`cat ${PWD}/servers | awk '{print $1}'`
 PORT_BASE=7000
 
-./stop.sh
+${PWD}/stop.sh
 
 i=0
 for server in ${SERVERS[@]}

@@ -5,13 +5,13 @@ LOCAL_DIR=/mnt/hdd/kfeng/redis
 REDIS_VER=`$REDIS_DIR/src/redis-server -v | awk '{print $3}' | cut -d'=' -f2`
 CONF_FILE=redis.conf
 HOSTNAME_POSTFIX=-40g
-PWD=$(pwd)
-SERVERS=`cat servers | awk '{print $1}'`
+PWD=~/pkg_src/Utility-scripts/Redis
+SERVERS=`cat ${PWD}/servers | awk '{print $1}'`
 PORT_BASE=7000
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
-n_server=`cat servers | wc -l`
+n_server=`cat ${PWD}/servers | wc -l`
 if [ $((n_server%2)) -ne 0 ]
 then
   echo "Even number of servers are required, exiting ..."
@@ -63,7 +63,7 @@ do
 done
 
 # Verify server
-mpssh -f servers 'pgrep -l redis-server'
+mpssh -f ${PWD}/servers 'pgrep -l redis-server'
 
 # Connect servers
 # for Redis 5 the command should be like redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 --cluster-replicas 1
@@ -89,4 +89,4 @@ if version_gt $REDIS_VER "5.0"
 then
   cmd="${cmd}--cluster-replicas 1"
 fi
-$cmd
+echo yes | $cmd
