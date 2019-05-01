@@ -52,7 +52,7 @@ i=1
 for node in ${clients[@]}
 do
   meta_server=`head -$i servers | tail -1`
-  ssh $node "sudo mount -t pvfs2 $proto://$meta_server:$port/orangefs $MOUNT_POINT"
+  ssh $node "sudo mount -t pvfs2 $proto://${meta_server}${hs_hostname_suffix}:$port/orangefs $MOUNT_POINT"
   ((i=$i+1))
   if [ "$i" -gt "$nservers" ]
   then
@@ -61,4 +61,4 @@ do
 done
 
 #check mounted pvfs2
-mpssh -f $CWD/clients "mount | grep pvfs"
+mpssh -f $CWD/clients "mount | grep pvfs" | sort

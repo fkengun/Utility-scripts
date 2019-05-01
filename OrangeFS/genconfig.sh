@@ -23,7 +23,7 @@ for client in ${client_list[@]}
 do
   metadata_server=`head -$count servers | tail -1`
   metadata_server_ip=`getent hosts ${metadata_server}${hs_hostname_suffix} | awk '{print $1}'`
-  ssh $client "echo 'tcp://$metadata_server_ip:3334/orangefs $MOUNT_POINT pvfs2 defaults,auto 0 0' > $PVFS2TAB_FILE" &
+  ssh $client "echo 'tcp://$metadata_server_ip:3334/orangefs $MOUNT_POINT pvfs2 defaults,auto 0 0' > $PVFS2TAB_FILE_CLIENT" &
   ((count=$count+1))
 done
 wait
@@ -42,6 +42,7 @@ fi
 # replace hostname with high-speed one on Ares
 if [ "$USER" == "kfeng" ]
 then
+  sed -i 's/:\/\/ares-stor-0/:\/\/172.25.201./' $CWD/pvfs2-${number}N.conf
   sed -i 's/:\/\/ares-stor-/:\/\/172.25.201./' $CWD/pvfs2-${number}N.conf
   sed -i 's/:\/\/ares-comp-/:\/\/172.25.101./' $CWD/pvfs2-${number}N.conf
 fi
