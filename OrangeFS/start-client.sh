@@ -1,8 +1,15 @@
 #!/bin/bash
 
-if [ -f env.sh ]
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ -f ${CWD}/env.sh ]
 then
-  source env.sh
+  source ${CWD}/env.sh
 else
   echo "env.sh does not exist, quiting ..."
   exit
@@ -29,6 +36,7 @@ fi
 
 source ~/.bash_aliases
 
+echo -e "${GREEN}Starting OrangeFS clients ...${NC}"
 if [[ ! -z $PVFS2_SRC_HOME ]]
 then
   KERNEL_DIR="$PVFS2_SRC_HOME/src/kernel/linux-2.6"
@@ -38,7 +46,7 @@ else
   CLIENT_DIR="$PVFS2_HOME/sbin"
 fi
 
-clients=`awk '{print $1}' clients`
+clients=`awk '{print $1}' ${CWD}/clients`
 
 #insert pvfs2 module into kernel
 mpssh -f $CWD/clients "sudo insmod $KERNEL_DIR/pvfs2.ko"
@@ -47,11 +55,11 @@ mpssh -f $CWD/clients "sudo insmod $KERNEL_DIR/pvfs2.ko"
 mpssh -f $CWD/clients "sudo $CLIENT_DIR/pvfs2-client -p $CLIENT_DIR/pvfs2-client-core"
 
 #mount pvfs2
-nservers=`cat servers | wc -l`
+nservers=`cat $CWD/servers | wc -l`
 i=1
 for node in ${clients[@]}
 do
-  meta_server=`head -$i servers | tail -1`
+  meta_server=`head -$i $CWD/servers | tail -1`
   ssh $node "sudo mount -t pvfs2 $proto://${meta_server}${hs_hostname_suffix}:$port/orangefs $MOUNT_POINT"
   ((i=$i+1))
   if [ "$i" -gt "$nservers" ]
@@ -61,4 +69,13 @@ do
 done
 
 #check mounted pvfs2
-mpssh -f $CWD/clients "mount | grep pvfs" | sort
+mpssh -f $CWD/clients "mount | grep pvfs" | sort > $CWD/tmp
+nentries=`cat $CWD/tmp | wc -l`
+nclients=`cat $CWD/clients | wc -l`
+if [[ $nentries != $nclients ]]
+then
+  echo -e "${RED}Something is wrong, we have unqeual number of mount entries and client nodes${NC}"
+else
+  cat $CWD/tmp
+  rm -f $CWD/tmp
+fi

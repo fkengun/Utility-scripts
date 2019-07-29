@@ -23,6 +23,7 @@ PVFS2_PING="$PVFS2_HOME/bin/pvfs2-ping"
 echo -e "${GREEN}Starting OrangeFS servers ...${NC}"
 mpssh -f $CWD/servers "$PVFS2_BIN $CWD/pvfs2-${number}N.conf -f"
 mpssh -f $CWD/servers "$PVFS2_BIN $CWD/pvfs2-${number}N.conf"
+mpssh -f $CWD/servers "pgrep pvfs2-server | xargs taskset -cp 0,1,2,3"
 mpssh -f $CWD/servers "pgrep -a pvfs2-server"
 
 sleep 5

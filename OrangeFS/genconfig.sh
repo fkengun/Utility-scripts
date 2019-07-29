@@ -1,8 +1,10 @@
 #!/bin/bash
 
-if [ -f env.sh ]
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ -f ${CWD}/env.sh ]
 then
-  source env.sh
+  source ${CWD}/env.sh
 else
   echo "env.sh does not exist, quiting ..."
   exit
@@ -17,11 +19,11 @@ then
     sed -i "s/TroveSyncData.*/TroveSyncData yes/" $CWD/pvfs2-${number}N.conf
 fi
 
-client_list=`cat clients | awk '{print $1}'`
+client_list=`cat ${CWD}/clients | awk '{print $1}'`
 count=1
 for client in ${client_list[@]}
 do
-  metadata_server=`head -$count servers | tail -1`
+  metadata_server=`head -$count ${CWD}/servers | tail -1`
   metadata_server_ip=`getent hosts ${metadata_server}${hs_hostname_suffix} | awk '{print $1}'`
   ssh $client "echo 'tcp://$metadata_server_ip:3334/orangefs $MOUNT_POINT pvfs2 defaults,auto 0 0' > $PVFS2TAB_FILE_CLIENT" &
   ((count=$count+1))
@@ -31,7 +33,7 @@ wait
 # sync files only on Chameleon
 if [ "$USER" == "cc" ]
 then
-  server_list=`cat servers | awk '{print $1}'`
+  server_list=`cat ${CWD}/servers | awk '{print $1}'`
   for node in ${server_list[@]}
   do
     rsync -az $CWD/pvfs2-${number}N.conf $node:$CWD/pvfs2-${number}N.conf
