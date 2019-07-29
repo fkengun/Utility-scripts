@@ -1,5 +1,10 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
 REDIS_DIR=~/pkg_src/redis-3.2.13
 LOCAL_DIR=/mnt/hdd/kfeng/redis
 REDIS_VER=`$REDIS_DIR/src/redis-server -v | awk '{print $3}' | cut -d'=' -f2`
@@ -25,6 +30,7 @@ then
 fi
 
 # Prepare configuration for each server
+echo -e "${GREEN}Preparing Redis configuration files ...${NC}"
 i=0
 for server in ${SERVERS[@]}
 do
@@ -36,13 +42,14 @@ do
   echo "cluster-enabled yes" >> $port/$CONF_FILE
   echo "cluster-config-file nodes.conf" >> $port/$CONF_FILE
   echo "cluster-node-timeout 5000" >> $port/$CONF_FILE
-  echo "appendonly yes" >> $port/$CONF_FILE
+  echo "appendonly no" >> $port/$CONF_FILE
   echo "protected-mode no" >> $port/$CONF_FILE
   echo "logfile $LOCAL_DIR/$port/file.log" >> $port/$CONF_FILE
   ((i=i+1))
 done
 
 # Copy configuration files to local directories on all servers
+echo -e "${GREEN}Copying Redis configuration files ...${NC}"
 i=0
 for server in ${SERVERS[@]}
 do
@@ -53,6 +60,7 @@ do
 done
 
 # Start server
+echo -e "${GREEN}Starting Redis ...${NC}"
 i=0
 for server in ${SERVERS[@]}
 do
@@ -63,11 +71,13 @@ do
 done
 
 # Verify server
+echo -e "${GREEN}Verifying Redis servers ...${NC}"
 mpssh -f ${PWD}/servers 'pgrep -l redis-server'
 
 # Connect servers
 # for Redis 5 the command should be like redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 --cluster-replicas 1
 # for Redis 3 and 4, the command looks like ./redis-trib.rb create --replicas 1 127.0.0.1:7000 127.0.0.1:7001
+echo -e "${GREEN}Connecting Redis servers ...${NC}"
 i=0
 if version_gt $REDIS_VER "5.0"
 then
