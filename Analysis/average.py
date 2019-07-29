@@ -23,23 +23,24 @@ if __name__== "__main__":
   data = np.array(data)
   shape = dims
   data_mat = data.reshape(shape)
+  data_mat[data_mat == 0] = 'nan'
   if verbose:
     print data_mat
-  ave = np.mean(data_mat, axis = ave_axis)
-  stddev = np.std(data_mat, axis = ave_axis)
+  ave = np.nanmean(data_mat, axis = ave_axis)
+  stddev = np.nanstd(data_mat, axis = ave_axis)
 
   print "Average:"
   if len(ave.shape) > 2:
     for n in ave:
-      np.savetxt(sys.stdout, n, fmt = '%.7f')
+      np.savetxt(sys.stdout, n, fmt = '%-10.4f')
       print ''
   else:
-    np.savetxt(sys.stdout, ave, fmt = '%.7f')
+    np.savetxt(sys.stdout, ave, fmt = '%-10.4f')
 
   print "Standard deviation:"
   if len(ave.shape) > 2:
     for n in stddev:
-      np.savetxt(sys.stdout, n, fmt = '%-6s')
+      np.savetxt(sys.stdout, n, fmt = '%-10.4f')
       print ''
   else:
-    np.savetxt(sys.stdout, stddev, fmt = '%-6s')
+    np.savetxt(sys.stdout, stddev, fmt = '%-10.4f')
