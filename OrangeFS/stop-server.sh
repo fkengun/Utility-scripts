@@ -19,4 +19,4 @@ source ~/.bash_aliases
 
 echo -e "${GREEN}Stopping OrangeFS servers ...${NC}"
 mpssh -f $CWD/servers "killall -9 pvfs2-server"
-mpssh -f $CWD/servers "ps -ef | grep pvfs2-server"
+mpssh -f $CWD/servers "pgrep -al pvfs2-server"

@@ -15,6 +15,7 @@ else
   exit
 fi
 
+source ${CWD}/stop-client.sh
 source ${CWD}/stop-server.sh
 
 echo -e "${GREEN}Cleaning OrangeFS ...${NC}"
