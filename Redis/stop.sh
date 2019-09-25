@@ -5,8 +5,16 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-PWD=~/pkg_src/Utility-scripts/Redis
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ -f ${CWD}/env.sh ]
+then
+  source ${CWD}/env.sh
+else
+  echo "env.sh does not exist, quiting ..."
+  exit
+fi
 
 echo -e "${GREEN}Stopping Redis ...${NC}"
-mpssh -f ${PWD}/servers 'killall redis-server' > /dev/null
-echo "Redis is stopped"
+mpssh -f ${CWD}/servers 'killall redis-server' > /dev/null
+echo -e "${GREEN}Redis is stopped${NC}"

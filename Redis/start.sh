@@ -5,18 +5,19 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-REDIS_DIR=~/pkg_src/redis-3.2.13
-LOCAL_DIR=/mnt/hdd/kfeng/redis
-REDIS_VER=`$REDIS_DIR/src/redis-server -v | awk '{print $3}' | cut -d'=' -f2`
-CONF_FILE=redis.conf
-HOSTNAME_POSTFIX=-40g
-PWD=~/pkg_src/Utility-scripts/Redis
-SERVERS=`cat ${PWD}/servers | awk '{print $1}'`
-PORT_BASE=7000
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ -f ${CWD}/env.sh ]
+then
+  source ${CWD}/env.sh
+else
+  echo "env.sh does not exist, quiting ..."
+  exit
+fi
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
-n_server=`cat ${PWD}/servers | wc -l`
+n_server=`cat ${CWD}/servers | wc -l`
 if [ $((n_server%2)) -ne 0 ]
 then
   echo "Even number of servers are required, exiting ..."
@@ -43,6 +44,7 @@ do
   echo "cluster-config-file nodes.conf" >> $port/$CONF_FILE
   echo "cluster-node-timeout 5000" >> $port/$CONF_FILE
   echo "appendonly no" >> $port/$CONF_FILE
+  #echo "appendfsync always" >> $port/$CONF_FILE
   echo "protected-mode no" >> $port/$CONF_FILE
   echo "logfile $LOCAL_DIR/$port/file.log" >> $port/$CONF_FILE
   ((i=i+1))
@@ -55,7 +57,7 @@ for server in ${SERVERS[@]}
 do
   ((port=$PORT_BASE+$i))
   echo Copying configuration directory $port to $server ...
-  rsync -qraz $PWD/$port $server:$LOCAL_DIR/
+  rsync -qraz ${CWD}/$port $server:$LOCAL_DIR/
   ((i=i+1))
 done
 
@@ -72,7 +74,7 @@ done
 
 # Verify server
 echo -e "${GREEN}Verifying Redis servers ...${NC}"
-mpssh -f ${PWD}/servers 'pgrep -l redis-server'
+mpssh -f ${CWD}/servers 'pgrep -l redis-server'
 
 # Connect servers
 # for Redis 5 the command should be like redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 --cluster-replicas 1
@@ -100,3 +102,4 @@ then
   cmd="${cmd}--cluster-replicas 1"
 fi
 echo yes | $cmd
+echo -e "${GREEN}Redis is started${NC}"

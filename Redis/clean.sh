@@ -5,12 +5,17 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-LOCAL_DIR=/mnt/hdd/kfeng/redis
-PWD=~/pkg_src/Utility-scripts/Redis
-SERVERS=`cat ${PWD}/servers | awk '{print $1}'`
-PORT_BASE=7000
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-${PWD}/stop.sh
+if [ -f ${CWD}/env.sh ]
+then
+  source ${CWD}/env.sh
+else
+  echo "env.sh does not exist, quiting ..."
+  exit 1
+fi
+
+${CWD}/stop.sh
 
 echo -e "${GREEN}Cleaning Redis ...${NC}"
 i=0
@@ -21,4 +26,4 @@ do
   ssh $server "rm -rf $LOCAL_DIR/*"
   ((i=i+1))
 done
-echo "Previous Redis is cleaned"
+echo -e "${GREEN}Previous Redis is cleaned${NC}"
