@@ -16,7 +16,7 @@ $PVFS2_GENCONFIG --quiet --protocol tcp --ioservers $servers --metaservers $serv
 
 if [ "$1" == "sync" ]
 then
-    sed -i "s/TroveSyncData.*/TroveSyncData yes/" $CWD/pvfs2-${number}N.conf
+  sed -i "s/TroveSyncData.*/TroveSyncData yes/" $CWD/pvfs2-${number}N.conf
 fi
 
 client_list=`cat ${CWD}/clients | awk '{print $1}'`
