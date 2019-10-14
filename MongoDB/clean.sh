@@ -33,4 +33,16 @@ echo -e "${GREEN}Removing MongoDB log files ...${NC}"
 mpssh -f ${CWD}/servers "rm -rf ${TMPFS_PATH}/${MONGOD_LOG_FILE}" > /dev/null
 mpssh -f ${CWD}/servers "rm -rf ${TMPFS_PATH}/${MONGOS_LOG_FILE}" > /dev/null
 
+echo -e "${GREEN}Checking remaining processes ...${NC}"
+server_pgrep=`mpssh -f ${CWD}/servers "pgrep -la \"mongod|mongos\""`
+client_pgrep=`mpssh -f ${CWD}/clients "pgrep -la \"mongod|mongos\""`
+if [[ ! -z ${server_pgrep} ]] || [[ ! -z ${client_pgrep} ]]
+then
+  echo -e "${RED}Something is left there${NC}"
+  mpssh -f ${CWD}/servers "pgrep -la \"mongod|mongos\""
+  mpssh -f ${CWD}/clients "pgrep -la \"mongod|mongos\""
+else
+  echo -e "${GREEN}Everything is cleaned${NC}"
+fi
+
 echo -e "${GREEN}Done cleaning MongoDB${NC}"
