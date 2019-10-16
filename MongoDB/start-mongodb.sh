@@ -36,6 +36,7 @@ for client in ${client_list[@]}
 do
   rsync -az ${CWD}/${MONGOS_CONF_FILE} ${client}:${CLIENT_LOCAL_PATH}/${MONGOS_CONF_FILE} &
 done
+wait
 
 mpssh -f ${CWD}/servers "mkdir -p ${mongod_local_path}" > /dev/null
 mpssh -f ${CWD}/clients "mkdir -p ${mongos_local_path}" > /dev/null
@@ -59,8 +60,10 @@ sleep 5
 echo -e "${GREEN}Initializing config replica set ...${NC}"
 first_config_server=`head -1 ${CWD}/servers`
 second_config_server=`head -2 ${CWD}/servers | tail -1`
+sed -i "s|_id:.*|_id: \"${CONFIG_REPL_NAME}\",|" conf_replica_init.js
 sed -i "s|_id : 0, host : \"ares-comp-.*|_id : 0, host : \"${first_config_server}:${MONGO_PORT}\" },|" conf_replica_init.js
 sed -i "s|_id : 1, host : \"ares-comp-.*|_id : 1, host : \"${second_config_server}:${MONGO_PORT}\" }|" conf_replica_init.js
+rm -rf conf_replica_init.log
 mongo --host ${first_config_server} --port ${MONGO_PORT} < conf_replica_init.js > conf_replica_init.log
 cat conf_replica_init.log | grep -i ok
 mongo --host ${first_config_server} --port ${MONGO_PORT} --eval "rs.isMaster()" > conf_replica_init.log
@@ -99,6 +102,7 @@ do
   count=$((count+1))
 done
 printf "\t]\n}\n)" >> shard_replica_init.js
+rm -rf shard_replica_init.log
 mongo --host ${shard_server} --port ${MONGO_PORT} < shard_replica_init.js > shard_replica_init.log
 cat shard_replica_init.log | grep -i ok
 
@@ -125,6 +129,7 @@ do
   echo "sh.addShard(\"${SHARD_REPL_NAME}/${shard_server}:${MONGO_PORT}\")" >> add_shard_to_mongos.js
 done
 echo "sh.status()" >> add_shard_to_mongos.js
+rm -rf add_shard_to_mongos.log
 mongo --host ${router_server} --port ${MONGO_PORT} < add_shard_to_mongos.js >> add_shard_to_mongos.log
 cat add_shard_to_mongos.log | grep -i ok
 
