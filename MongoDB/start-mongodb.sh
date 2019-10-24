@@ -18,17 +18,23 @@ fi
 source ~/.bash_aliases
 
 echo -e "${GREEN}Preparing config files ...${NC}"
-sed -i "s|dbPath:.*|dbPath: ${mongod_local_path}|" ${MONGOD_CONF_FILE}
-sed -i "s|path: .*|path: ${TMPFS_PATH}/${MONGOD_LOG_FILE}|" ${MONGOD_CONF_FILE}
-sed -i "s|port: .*|port: ${MONGO_PORT}|" ${MONGOD_CONF_FILE}
+sed -i "s|clusterRole: .*|clusterRole: configsvr|" ${CONFIG_MONGOD_CONF_FILE}
+sed -i "s|replSetName: .*|replSetName: ${CONFIG_REPL_NAME}|" ${CONFIG_MONGOD_CONF_FILE}
+sed -i "s|dbPath:.*|dbPath: ${mongod_local_path}|" ${CONFIG_MONGOD_CONF_FILE}
+sed -i "s|path: .*|path: ${TMPFS_PATH}/${MONGOD_LOG_FILE}|" ${CONFIG_MONGOD_CONF_FILE}
+sed -i "s|port: .*|port: ${MONGO_PORT}|" ${CONFIG_MONGOD_CONF_FILE}
 sed -i "s|dbPath:.*|dbPath: ${mongos_local_path}|" ${MONGOS_CONF_FILE}
 sed -i "s|path: .*|path: ${TMPFS_PATH}/${MONGOS_LOG_FILE}|" ${MONGOS_CONF_FILE}
 sed -i "s|port: .*|port: ${MONGO_PORT}|" ${MONGOS_CONF_FILE}
+sed -i 's|clusterRole: .*|clusterRole: shardsvr|' ${SHARD_MONGOD_CONF_FILE}
+sed -i "s|dbPath:.*|dbPath: ${mongod_shard_path}|" ${SHARD_MONGOD_CONF_FILE}
+sed -i "s|path: .*|path: ${TMPFS_PATH}/${MONGOD_SHARD_LOG_FILE}|" ${SHARD_MONGOD_CONF_FILE}
+sed -i "s|port: .*|port: ${MONGO_PORT}|" ${SHARD_MONGOD_CONF_FILE}
 
-server_list=`cat ${CWD}/servers | awk '{print $1}'`
-for server in ${server_list[@]}
+config_server_list=`head -${CONFIG_SERVER_COUNT} ${CWD}/servers | awk '{print $1}'`
+for server in ${config_server_list[@]}
 do
-  rsync -az ${CWD}/${MONGOD_CONF_FILE} ${server}:${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE} &
+  rsync -az ${CWD}/${CONFIG_MONGOD_CONF_FILE} ${server}:${SERVER_LOCAL_PATH}/${CONFIG_MONGOD_CONF_FILE} &
 done
 wait
 client_list=`cat ${CWD}/clients | awk '{print $1}'`
@@ -37,22 +43,21 @@ do
   rsync -az ${CWD}/${MONGOS_CONF_FILE} ${client}:${CLIENT_LOCAL_PATH}/${MONGOS_CONF_FILE} &
 done
 wait
-
-mpssh -f ${CWD}/servers "mkdir -p ${mongod_local_path}" > /dev/null
-mpssh -f ${CWD}/clients "mkdir -p ${mongos_local_path}" > /dev/null
-
-echo -e "${GREEN}Starting config nodes ...${NC}"
-config_server_list=`head -${CONFIG_SERVER_COUNT} ${CWD}/servers | awk '{print $1}'`
-for config_server in ${config_server_list[@]}
+shard_server_list=`cat ${CWD}/servers | awk '{print $1}'`
+for server in ${shard_server_list[@]}
 do
-  ssh ${config_server} "sed -i 's|clusterRole: .*|clusterRole: configsvr|' ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE}" &
-  ssh ${config_server} "sed -i 's|replSetName: .*|replSetName: \"${CONFIG_REPL_NAME}\"|' ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE}" &
+  rsync -az ${CWD}/${SHARD_MONGOD_CONF_FILE} ${server}:${SERVER_LOCAL_PATH}/${SHARD_MONGOD_CONF_FILE} &
 done
 wait
 
+mpssh -f ${CWD}/servers "mkdir -p ${mongod_local_path}" > /dev/null
+mpssh -f ${CWD}/clients "mkdir -p ${mongos_local_path}" > /dev/null
+mpssh -f ${CWD}/servers "mkdir -p ${mongod_shard_path}" > /dev/null
+
+echo -e "${GREEN}Starting config nodes ...${NC}"
 for config_server in ${config_server_list[@]}
 do
-  ssh ${config_server} "numactl --interleave=all mongod --config ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE} --fork" &
+  ssh ${config_server} "numactl --interleave=all mongod --config ${SERVER_LOCAL_PATH}/${CONFIG_MONGOD_CONF_FILE} --fork" &
 done
 wait
 sleep 5
@@ -60,10 +65,8 @@ sleep 5
 echo -e "${GREEN}Initializing config replica set ...${NC}"
 first_config_server=`head -1 ${CWD}/servers`
 second_config_server=`head -2 ${CWD}/servers | tail -1`
-sed -i "s|_id:.*|_id: \"${CONFIG_REPL_NAME}\",|" conf_replica_init.js
 sed -i "s|_id : 0, host : \"ares-comp-.*|_id : 0, host : \"${first_config_server}:${MONGO_PORT}\" },|" conf_replica_init.js
 sed -i "s|_id : 1, host : \"ares-comp-.*|_id : 1, host : \"${second_config_server}:${MONGO_PORT}\" }|" conf_replica_init.js
-rm -rf conf_replica_init.log
 mongo --host ${first_config_server} --port ${MONGO_PORT} < conf_replica_init.js > conf_replica_init.log
 cat conf_replica_init.log | grep -i ok
 mongo --host ${first_config_server} --port ${MONGO_PORT} --eval "rs.isMaster()" > conf_replica_init.log
@@ -71,39 +74,59 @@ cat conf_replica_init.log | grep -i "ismaster\|configsvr"
 mongo --host ${first_config_server} --port ${MONGO_PORT} --eval "rs.status()" > conf_replica_init.log
 cat conf_replica_init.log | grep -i "ok\|\"name\"\|stateStr"
 
+SHARD_BASE_PORT_BAKE=${SHARD_BASE_PORT}
 echo -e "${GREEN}Starting shard nodes ...${NC}"
-shard_server_list=`awk "NR > ${CONFIG_SERVER_COUNT} && NR <= $((SHARD_SERVER_COUNT+CONFIG_SERVER_COUNT))" ${CWD}/servers | awk '{print $1}'`
+shard_server_list=`head -${SHARD_SERVER_COUNT} ${CWD}/servers | awk '{print $1}'`
+step=1
 for shard_server in ${shard_server_list}
 do
-  ssh ${shard_server} "sed -i 's|clusterRole: .*|clusterRole: shardsvr|' ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE}" &
-  ssh ${shard_server} "sed -i 's|replSetName: .*|replSetName: \"${SHARD_REPL_NAME}\"|' ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE}" &
+  ssh ${shard_server} "sed -i -e 's|replSetName: .*|replSetName: ${SHARD_REPL_NAME}${step}|' -e 's|port: .*|port: ${SHARD_BASE_PORT}|' ${SERVER_LOCAL_PATH}/${SHARD_MONGOD_CONF_FILE}" &
+  ((SHARD_BASE_PORT = SHARD_BASE_PORT + 1))
+  ((step=step+1))
 done
 wait
 for shard_server in ${shard_server_list}
 do
-  ssh ${shard_server} "numactl --interleave=all mongod --config ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE} --fork" &
+  ssh ${shard_server} "numactl --interleave=all mongod --config ${SERVER_LOCAL_PATH}/${SHARD_MONGOD_CONF_FILE} --fork" &
 done
 wait
+sleep 5
 
+shard_server_list=`head -${SHARD_SERVER_COUNT} ${CWD}/servers | awk '{print $1}'`
 echo -e "${GREEN}Initializing shard replica set ...${NC}"
-truncate -s 0 shard_replica_init.js
-printf "rs.initiate(\n{\n" > shard_replica_init.js
-printf "\t_id : \"${SHARD_REPL_NAME}\",\n" >> shard_replica_init.js
-printf "\tmembers: [" >> shard_replica_init.js
+echo -e "${GREEN}Preparing shards to mongos/query router ...${NC}"
+truncate -s 0 add_shard_to_mongos.js
 count=0
 for shard_server in ${shard_server_list}
 do
-  if [[ ${count} != $((SHARD_SERVER_COUNT-1)) ]]
-  then
-    printf "\t\t{ _id : %s, host : \"%s\" },\n" ${count} ${shard_server} >> shard_replica_init.js
-  else
-    printf "\t\t{ _id : %s, host : \"%s\" }\n" ${count} ${shard_server} >> shard_replica_init.js
-  fi
+  truncate -s 0 shard_replica_init.js
+  printf "sh.addShard(\"${SHARD_REPL_NAME}$((count+1))/" >> add_shard_to_mongos.js
+  printf "rs.initiate(\n{\n" > shard_replica_init.js
+  printf "\t_id : \"${SHARD_REPL_NAME}$((count+1))\",\n" >> shard_replica_init.js
+  printf "\tmembers: [\n" >> shard_replica_init.js
+
+  number=0
+  for ((i=0;i<"SHARD_COPY_COUNT";i++))
+  do
+    nodeid=$(((SHARD_SERVER_COUNT+count-i)%SHARD_SERVER_COUNT))
+    current_server=`sed -n $((nodeid+1))p ${CWD}/servers | awk '{print $1}'`
+    if [[ ${i} != $((SHARD_COPY_COUNT-1)) ]]
+    then
+      printf "\t\t{ _id :a %s, host : \"%s\" },\n" ${number} ${current_server}:$((SHARD_BASE_PORT_BAKE+count)) >> shard_replica_init.js
+      printf "${current_server}:$((SHARD_BASE_PORT_BAKE+count))," >> add_shard_to_mongos.js
+    else
+      printf "\t\t{ _id : %s, host : \"%s\" }\n" ${number} ${current_server}:$((SHARD_BASE_PORT_BAKE+count)) >> shard_replica_init.js
+      printf "${current_server}:$((SHARD_BASE_PORT_BAKE+count))\")\n" >> add_shard_to_mongos.js
+    fi
+      number=$((number+1))
+  done
+
+  printf "\t]\n}\n)\n" >> shard_replica_init.js
+  cat shard_replica_init.js
+  mongo --host ${current_server} --port $((SHARD_BASE_PORT_BAKE+count)) < shard_replica_init.js > shard_replica_init.log
+  echo -e "${CYAN}Finish configuring shard server ${current_server}:$((SHARD_BASE_PORT_BAKE+count))${NC}"
   count=$((count+1))
 done
-printf "\t]\n}\n)" >> shard_replica_init.js
-rm -rf shard_replica_init.log
-mongo --host ${shard_server} --port ${MONGO_PORT} < shard_replica_init.js > shard_replica_init.log
 cat shard_replica_init.log | grep -i ok
 
 echo -e "${GREEN}Starting router nodes ...${NC}"
@@ -121,15 +144,10 @@ do
   ssh ${router_server} "${mongos_cmd}" &
 done
 wait
+sleep 5
 
 echo -e "${GREEN}Adding shards to mongos/query router ...${NC}"
-truncate -s 0 add_shard_to_mongos.js
-for shard_server in ${shard_server_list}
-do
-  echo "sh.addShard(\"${SHARD_REPL_NAME}/${shard_server}:${MONGO_PORT}\")" >> add_shard_to_mongos.js
-done
-echo "sh.status()" >> add_shard_to_mongos.js
-rm -rf add_shard_to_mongos.log
+truncate -s 0 add_shard_to_mongos.log
 mongo --host ${router_server} --port ${MONGO_PORT} < add_shard_to_mongos.js >> add_shard_to_mongos.log
 cat add_shard_to_mongos.log | grep -i ok
 

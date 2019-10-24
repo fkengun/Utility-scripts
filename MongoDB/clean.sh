@@ -18,20 +18,16 @@ fi
 source ${CWD}/stop-mongodb.sh
 
 echo -e "${GREEN}Removing MongoDB directories ...${NC}"
-mpssh -f ${CWD}/servers "rm -rf ${mongod_local_path}" > /dev/null
-mpssh -f ${CWD}/servers "rm -rf ${mongos_local_path}" > /dev/null
-mpssh -f ${CWD}/clients "rm -rf ${mongod_local_path}" > /dev/null
+mpssh -f ${CWD}/servers "rm -rf ${mongod_local_path} ${mongod_shard_path}" > /dev/null
 mpssh -f ${CWD}/clients "rm -rf ${mongos_local_path}" > /dev/null
 
 echo -e "${GREEN}Removing MongoDB conf files ...${NC}"
-mpssh -f ${CWD}/servers "rm -rf ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE}" > /dev/null
-mpssh -f ${CWD}/servers "rm -rf ${SERVER_LOCAL_PATH}/${MONGOS_CONF_FILE}" > /dev/null
-mpssh -f ${CWD}/clients "rm -rf ${SERVER_LOCAL_PATH}/${MONGOD_CONF_FILE}" > /dev/null
-mpssh -f ${CWD}/clients "rm -rf ${SERVER_LOCAL_PATH}/${MONGOS_CONF_FILE}" > /dev/null
+mpssh -f ${CWD}/servers "rm -rf ${SERVER_LOCAL_PATH}/${CONFIG_MONGOD_CONF_FILE} ${SERVER_LOCAL_PATH}/${SHARD_MONGOD_CONF_FILE}" > /dev/null
+mpssh -f ${CWD}/clients "rm -rf ${CLIENT_LOCAL_PATH}/${MONGOS_CONF_FILE}" > /dev/null
 
 echo -e "${GREEN}Removing MongoDB log files ...${NC}"
-mpssh -f ${CWD}/servers "rm -rf ${TMPFS_PATH}/${MONGOD_LOG_FILE}" > /dev/null
-mpssh -f ${CWD}/servers "rm -rf ${TMPFS_PATH}/${MONGOS_LOG_FILE}" > /dev/null
+mpssh -f ${CWD}/servers "rm -rf ${TMPFS_PATH}/${MONGOD_LOG_FILE} ${TMPFS_PATH}/${MONGOD_SHARD_LOG_FILE}" > /dev/null
+mpssh -f ${CWD}/clients "rm -rf ${TMPFS_PATH}/${MONGOS_LOG_FILE} ${mongos_diag_data_path}" > /dev/null
 
 echo -e "${GREEN}Checking remaining processes ...${NC}"
 server_pgrep=`mpssh -f ${CWD}/servers "pgrep -la \"mongod|mongos\""`
