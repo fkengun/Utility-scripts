@@ -12,7 +12,8 @@ fi
 
 PVFS2_GENCONFIG="$PVFS2_HOME/bin/pvfs2-genconfig"
 
-$PVFS2_GENCONFIG --quiet --protocol tcp --ioservers $servers --metaservers $servers --storage $SERVER_LOCAL_PATH/pvfs2-storage-space --metadata $SERVER_LOCAL_PATH/pvfs2-storage-space --logfile $TMPFS_PATH/orangefs-server.log $CWD/pvfs2-${number}N.conf
+echo $PVFS2_GENCONFIG --quiet --protocol tcp --dist-name ${dist_name} --dist-params ${dist_params} --ioservers $servers --metaservers $servers --storage $SERVER_LOCAL_PATH/pvfs2-storage-space --metadata $SERVER_LOCAL_PATH/pvfs2-storage-space --logfile $TMPFS_PATH/orangefs-server.log $CWD/pvfs2-${number}N.conf
+$PVFS2_GENCONFIG --quiet --protocol tcp --dist-name ${dist_name} --dist-params ${dist_params} --ioservers $servers --metaservers $servers --storage $SERVER_LOCAL_PATH/pvfs2-storage-space --metadata $SERVER_LOCAL_PATH/pvfs2-storage-space --logfile $TMPFS_PATH/orangefs-server.log $CWD/pvfs2-${number}N.conf
 
 if [ "$1" == "sync" ]
 then
