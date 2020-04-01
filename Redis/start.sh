@@ -24,14 +24,8 @@ then
   exit
 fi
 
-if [[ $n_server -lt 6 ]]
-then
-  echo "At least 6 servers are required, exiting ..."
-  exit
-fi
-
 # Prepare configuration for each server
-echo -e "${GREEN}Preparing Redis configuration files ...${NC}"
+echo -e "${GREEN}Preparing Redis cluster configuration files ...${NC}"
 i=0
 for server in ${SERVERS[@]}
 do
@@ -43,7 +37,7 @@ do
   echo "cluster-enabled yes" >> $port/$CONF_FILE
   echo "cluster-config-file nodes.conf" >> $port/$CONF_FILE
   echo "cluster-node-timeout 5000" >> $port/$CONF_FILE
-  echo "appendonly no" >> $port/$CONF_FILE
+  echo "appendonly yes" >> $port/$CONF_FILE
   #echo "appendfsync always" >> $port/$CONF_FILE
   echo "protected-mode no" >> $port/$CONF_FILE
   echo "logfile $LOCAL_DIR/$port/file.log" >> $port/$CONF_FILE
@@ -51,15 +45,16 @@ do
 done
 
 # Copy configuration files to local directories on all servers
-echo -e "${GREEN}Copying Redis configuration files ...${NC}"
+echo -e "${GREEN}Copying Redis cluster configuration files ...${NC}"
 i=0
 for server in ${SERVERS[@]}
 do
   ((port=$PORT_BASE+$i))
   echo Copying configuration directory $port to $server ...
-  rsync -qraz ${CWD}/$port $server:$LOCAL_DIR/
+  rsync -qraz ${CWD}/$port $server:$LOCAL_DIR/ &
   ((i=i+1))
 done
+wait
 
 # Start server
 echo -e "${GREEN}Starting Redis ...${NC}"
@@ -68,18 +63,19 @@ for server in ${SERVERS[@]}
 do
   ((port=$PORT_BASE+$i))
   echo Starting redis on $server:$port ...
-  ssh $server "sh -c \"cd $LOCAL_DIR/$port; $REDIS_DIR/src/redis-server ./$CONF_FILE > /dev/null 2>&1 &\""
+  ssh $server "sh -c \"cd $LOCAL_DIR/$port; $REDIS_DIR/src/redis-server ./$CONF_FILE > /dev/null 2>&1 &\"" &
   ((i=i+1))
 done
+wait
 
 # Verify server
-echo -e "${GREEN}Verifying Redis servers ...${NC}"
+echo -e "${GREEN}Verifying Redis cluster servers ...${NC}"
 mpssh -f ${CWD}/servers 'pgrep -l redis-server'
 
 # Connect servers
 # for Redis 5 the command should be like redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 --cluster-replicas 1
 # for Redis 3 and 4, the command looks like ./redis-trib.rb create --replicas 1 127.0.0.1:7000 127.0.0.1:7001
-echo -e "${GREEN}Connecting Redis servers ...${NC}"
+echo -e "${GREEN}Connecting Redis cluster servers ...${NC}"
 i=0
 if version_gt $REDIS_VER "5.0"
 then
@@ -87,7 +83,7 @@ then
   cmd="$REDIS_DIR/src/redis-cli --cluster create "
 else
   echo "Redis 3.x/4.x, using redis-trib.rb ..."
-  cmd="$REDIS_DIR/src/redis-trib.rb create --replicas 1 "
+  cmd="$REDIS_DIR/src/redis-trib.rb create --replicas 0 "
 fi
 
 for server in ${SERVERS[@]}
@@ -102,4 +98,10 @@ then
   cmd="${cmd}--cluster-replicas 1"
 fi
 echo yes | $cmd
+
+# Check cluster nodes
+echo -e "${GREEN}Checking Redis cluster nodes ...${NC}"
+first_server=`head -1 ${CWD}/servers`
+cmd="$REDIS_DIR/src/redis-cli -c -h ${first_server}${HOSTNAME_POSTFIX} -p ${PORT_BASE} cluster nodes"
+$cmd | sort -k9 -n
 echo -e "${GREEN}Redis is started${NC}"
