@@ -20,18 +20,18 @@ then
   if [ "$1" == "ib" ]
   then
     proto="ib"
-    port=3335
+    ((port=${comm_port}+1))
   elif [ "$1" == "tcp" ]
   then
     proto="tcp"
-    port=3334
+    port=${comm_port}
   else
     echo "unrecognized protocol: $1, supported protocols: tcp and ib, quiting ..."
     exit
   fi
 else
   proto="tcp"
-  port=3334
+  port=${comm_port}
 fi
 
 source ~/.bash_aliases
@@ -74,7 +74,9 @@ nentries=`cat $CWD/tmp | wc -l`
 nclients=`cat $CWD/clients | wc -l`
 if [[ $nentries != $nclients ]]
 then
-  echo -e "${RED}Something is wrong, we have unqeual number of mount entries and client nodes${NC}"
+  echo -e "${RED}Something is wrong!${NC}"
+  echo -e "${RED}Mount entries count: ${nentries}${NC}"
+  echo -e "${RED}Client nodes count: ${nclients}${NC}"
 else
   cat $CWD/tmp
   rm -f $CWD/tmp
