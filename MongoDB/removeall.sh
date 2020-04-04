@@ -15,4 +15,5 @@ else
   exit
 fi
 
-mongo --host ${CWD}/clients -p ${MONGO_PORT} < clear_db.js
+first_client=`head -1 ${CWD}/clients`
+mongo --host ${first_client} -p ${MONGO_PORT} < clear_db.js
