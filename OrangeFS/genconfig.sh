@@ -12,8 +12,8 @@ fi
 
 PVFS2_GENCONFIG="$PVFS2_HOME/bin/pvfs2-genconfig"
 
-echo $PVFS2_GENCONFIG --quiet --protocol tcp --tcpport ${comm_port} --dist-name ${dist_name} --dist-params ${dist_params} --ioservers $servers --metaservers $servers --storage $SERVER_LOCAL_PATH/pvfs2-storage-space --metadata $SERVER_LOCAL_PATH/pvfs2-storage-space --logfile $TMPFS_PATH/orangefs-server.log $CWD/pvfs2-${number}N.conf
-$PVFS2_GENCONFIG --quiet --protocol tcp --tcpport ${comm_port} --dist-name ${dist_name} --dist-params ${dist_params} --ioservers $servers --metaservers $servers --storage $SERVER_LOCAL_PATH/pvfs2-storage-space --metadata $SERVER_LOCAL_PATH/pvfs2-storage-space --logfile $TMPFS_PATH/orangefs-server.log $CWD/pvfs2-${number}N.conf
+echo ${PVFS2_GENCONFIG} --quiet --protocol tcp --tcpport ${comm_port} --dist-name ${dist_name} --dist-params ${dist_params} --ioservers ${servers} --metaservers ${servers} --storage ${SERVER_LOCAL_STOR_DIR} --metadata ${SERVER_LOCAL_STOR_DIR} --logfile ${SERVER_LOG_FILE} ${CWD}/pvfs2-${number}N.conf
+${PVFS2_GENCONFIG} --quiet --protocol tcp --tcpport ${comm_port} --dist-name ${dist_name} --dist-params ${dist_params} --ioservers ${servers} --metaservers ${servers} --storage ${SERVER_LOCAL_STOR_DIR} --metadata ${SERVER_LOCAL_STOR_DIR} --logfile ${SERVER_LOG_FILE} ${CWD}/pvfs2-${number}N.conf
 
 if [ "$1" == "sync" ]
 then
@@ -47,5 +47,6 @@ if [ "$USER" == "kfeng" ]
 then
   sed -i 's/:\/\/ares-stor-0/:\/\/172.25.201./' ${CWD}/pvfs2-${number}N.conf
   sed -i 's/:\/\/ares-stor-/:\/\/172.25.201./' ${CWD}/pvfs2-${number}N.conf
+  sed -i 's/:\/\/ares-comp-0/:\/\/172.25.101./' ${CWD}/pvfs2-${number}N.conf
   sed -i 's/:\/\/ares-comp-/:\/\/172.25.101./' ${CWD}/pvfs2-${number}N.conf
 fi

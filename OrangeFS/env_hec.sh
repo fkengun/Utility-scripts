@@ -7,16 +7,24 @@ then
 fi
 mpssh > /dev/null 2>&1 || { echo >&2 "mpssh is not found.  Aborting."; exit 1; }
 
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PVFS2_HOME="/mnt/common/jji/orangefs-install"
 PVFS2_SRC_HOME="/export/home/jji/orangefs_sourcecode/orangefs-2.8.8"
-PVFS2_LOCAL_PATH="/home/jji"
+SERVER_LOCAL_PATH="/mnt/hdd/kfeng"
+SERVER_LOCAL_STOR_DIR="${SERVER_LOCAL_PATH}/pvfs2-storage-space"
+CLIENT_LOCAL_PATH="/mnt/ssd/kfeng"
+MOUNT_POINT="${CLIENT_LOCAL_PATH}/pvfs2-mount"
 TMPFS_PATH="/dev/shm"
-PVFS2TAB_FILE=$PVFS2TAB_FILE
-MRVIZ_HOME="/mnt/common/jji/RHadoop/hadoop-2.5.0-cdh5.3.3"
-MOUNT_POINT="/home/jji/mount_point"
+SERVER_LOG_FILE="${TMPFS_PATH}/orangefe-server.log"
+PVFS2TAB_FILE_MASTER=""
+PVFS2TAB_FILE_CLIENT="/mnt/ssd/kfeng/pvfs2tab"
+PVFS2TAB_FILE_SERVER="/mnt/hdd/kfeng/pvfs2tab"
 STRIPE_SIZE="65536"
+PARENT_DIR=${PVFS2_SRC_HOME}
+SCRIPT_DIR="OrangeFS_scripts"
 servers=`awk '{printf("%s,",$1)}' ${CWD}/servers`
 number=`awk 'END{print NR}' ${CWD}/servers`
 hs_hostname_suffix=""
 dist_name="simple_stripe"
 dist_params="strip_size:${STRIPE_SIZE}"
+comm_port="3334"
