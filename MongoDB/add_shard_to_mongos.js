@@ -1,8 +1,0 @@
-sh.addShard("shard1/ares-stor-25-40g:27100")
-sh.addShard("shard2/ares-stor-26-40g:27101")
-sh.addShard("shard3/ares-stor-27-40g:27102")
-sh.addShard("shard4/ares-stor-28-40g:27103")
-sh.addShard("shard5/ares-stor-29-40g:27104")
-sh.addShard("shard6/ares-stor-30-40g:27105")
-sh.addShard("shard7/ares-stor-31-40g:27106")
-sh.addShard("shard8/ares-stor-32-40g:27107")
