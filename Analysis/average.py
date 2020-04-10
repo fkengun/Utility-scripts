@@ -27,20 +27,20 @@ if __name__== "__main__":
   if verbose:
     print data_mat
   ave = np.nanmean(data_mat, axis = ave_axis)
-  stddev = np.nanstd(data_mat, axis = ave_axis)
+  stddev = np.nanstd(data_mat, axis = ave_axis) / ave * 100
 
   print "Average:"
   if len(ave.shape) > 2:
     for n in ave:
-      np.savetxt(sys.stdout, n, fmt = '%-10.4f')
+      np.savetxt(sys.stdout, n, fmt = '%10.4f')
       print ''
   else:
-    np.savetxt(sys.stdout, ave, fmt = '%-10.4f')
+    np.savetxt(sys.stdout, ave, fmt = '%10.4f')
 
-  print "Standard deviation:"
+  print "Standard deviation (in percentage):"
   if len(ave.shape) > 2:
     for n in stddev:
-      np.savetxt(sys.stdout, n, fmt = '%-10.4f')
+      np.savetxt(sys.stdout, n, fmt = "%10.4f")
       print ''
   else:
-    np.savetxt(sys.stdout, stddev, fmt = '%-10.4f')
+    np.savetxt(sys.stdout, stddev, fmt = "%10.4f")
