@@ -8,14 +8,17 @@ def arg_parse():
   parser.add_argument('-f', '--file', dest = 'data_file', required = True, help = 'input raw data in one column')
   parser.add_argument('-d', '--dimension', dest = 'dims', nargs = '+', type = int, required = True, help = 'dimension of data array')
   parser.add_argument('-x', '--axis', dest = 'ave_axis', type = int, required = True, help = 'the dimension along which to average')
+  parser.add_argument('-m', '--multiplier', dest = 'multiplier', type = int, required = False, help = 'multiplier in data smoothing')
   parser.add_argument('-v', '--verbose', action = 'store_true', help = 'print data matrix before averaging')
   args = parser.parse_args()
-  return args.data_file, args.dims, args.ave_axis, args.verbose
+  if args.multiplier is None:
+    args.multiplier = 1
+  return args.data_file, args.dims, args.ave_axis, args.multiplier, args.verbose
 
-def reject_outliers(data, m = 2.):
+def reject_outliers(data, m = 1.):
   return data[abs(data - np.mean(data)) < m * np.std(data)]
 
-def smooth1d(data, m = 2.):
+def smooth1d(data, m = 1.):
   data_wo_outliers = reject_outliers(data, m)
   outliers = np.setdiff1d(data, data_wo_outliers)
   # I expect to see RuntimeWarnings in this block
@@ -26,7 +29,7 @@ def smooth1d(data, m = 2.):
     np.place(data, data == outlier, ave)
   return data
 
-def smooth(data, rep, m = 2.):
+def smooth(data, rep, m = 1.):
   if len(data) % rep != 0:
     print("Length of data is not a multiple of number of repetition")
   else:
@@ -37,7 +40,7 @@ def smooth(data, rep, m = 2.):
   return data
 
 if __name__== "__main__":
-  data_file, dims, ave_axis, verbose = arg_parse();
+  data_file, dims, ave_axis, multiplier, verbose = arg_parse();
 
   with open(data_file) as f:
     data = f.read().split('\n')
@@ -48,7 +51,7 @@ if __name__== "__main__":
   data = np.array(data)
   shape = dims
   rep = shape[ave_axis]
-  data = smooth(data, rep, 1)
+  data = smooth(data, rep, multiplier)
   data_mat = data.reshape(shape)
   # I expect to see RuntimeWarnings in this block
   with warnings.catch_warnings():
