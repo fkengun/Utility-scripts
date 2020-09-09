@@ -31,8 +31,8 @@ for server in ${SERVERS[@]}
 do
   server_ip=$(getent ahosts $server$HOSTNAME_POSTFIX | grep STREAM | awk '{print $1}')
   ((port=$PORT_BASE+$i))
-  mkdir -p $port
-  rm -rf $port/$CONF_FILE
+  mkdir -p ${CWD}/$port
+  rm -rf ${CWD}/$port/$CONF_FILE
   echo "port $port" >> $port/$CONF_FILE
   echo "cluster-enabled yes" >> $port/$CONF_FILE
   echo "cluster-config-file nodes.conf" >> $port/$CONF_FILE
@@ -51,6 +51,7 @@ for server in ${SERVERS[@]}
 do
   ((port=$PORT_BASE+$i))
   echo Copying configuration directory $port to $server ...
+  ssh $server mkdir -p $LOCAL_DIR
   rsync -qraz ${CWD}/$port $server:$LOCAL_DIR/ &
   ((i=i+1))
 done
