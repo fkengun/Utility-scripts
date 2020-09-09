@@ -38,7 +38,7 @@ do
   echo "cluster-config-file nodes.conf" >> $port/$CONF_FILE
   echo "cluster-node-timeout 5000" >> $port/$CONF_FILE
   echo "appendonly yes" >> $port/$CONF_FILE
-  echo "appendfsync always" >> $port/$CONF_FILE
+  #echo "appendfsync always" >> $port/$CONF_FILE
   echo "protected-mode no" >> $port/$CONF_FILE
   echo "logfile $LOCAL_DIR/$port/file.log" >> $port/$CONF_FILE
   ((i=i+1))
