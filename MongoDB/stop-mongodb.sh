@@ -20,6 +20,6 @@ source ~/.bash_aliases
 echo -e "${GREEN}Stopping MongoDB processes ...${NC}"
 mpssh -f ${CWD}/servers 'pkill mongod' > /dev/null
 mpssh -f ${CWD}/clients 'pkill mongos' > /dev/null
-mpssh -f ${CWD}/clients 'rm /tmp/mongodb-*.sock' > /dev/null
+mpssh -f ${CWD}/clients 'rm -f /tmp/mongodb-*.sock' > /dev/null
 
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && echo -e "${GREEN}Done stopping MongoDB${NC}"
