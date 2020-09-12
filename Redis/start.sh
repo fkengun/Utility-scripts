@@ -24,6 +24,19 @@ then
   exit
 fi
 
+if [[ `grep -- "${HOSTNAME_POSTFIX}" ${CWD}/servers | wc -l` == ${n_server} ]]
+then
+  echo -e "${CYAN}Hostname with ${HOSTNAME_POSTFIX} provided, use it directly ...${NC}"
+  HOSTNAME_POSTFIX=""
+elif [[ `grep -- "${HOSTNAME_POSTFIX}" ${CWD}/servers | wc -l` != 0 ]]
+then
+  echo "Mixed hostname format is not supported, exiting ..."
+  exit
+else
+  echo -e "${CYAN}Hostname without postfix provided, adding ${HOSTNAME_POSTFIX} ...${NC}"
+  sed -e "s/$/${HOSTNAME_POSTFIX}/" -i ${CWD}/servers
+fi
+
 # Prepare configuration for each server
 echo -e "${GREEN}Preparing Redis cluster configuration files ...${NC}"
 i=0
@@ -38,7 +51,7 @@ do
   echo "cluster-config-file nodes.conf" >> $port/$CONF_FILE
   echo "cluster-node-timeout 5000" >> $port/$CONF_FILE
   echo "appendonly yes" >> $port/$CONF_FILE
-  #echo "appendfsync always" >> $port/$CONF_FILE
+  echo "appendfsync always" >> $port/$CONF_FILE
   echo "protected-mode no" >> $port/$CONF_FILE
   echo "logfile $LOCAL_DIR/$port/file.log" >> $port/$CONF_FILE
   ((i=i+1))
