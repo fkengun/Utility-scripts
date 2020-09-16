@@ -13,11 +13,12 @@ All my scripts for my research work.
 # MongoDB scripts
 - Deploy MongoDB with sharding enabled
 - Start/stop MongoDB deployment
+- Purge MongoDB deployment
 - Clean MongoDB data
 
 # Redis scripts
-- Deploy Redis
-- Start/stop Redis deployment (NUMA-aware versions available)
+- Deploy Redis cluster
+- Start/stop Redis cluster deployment (NUMA-aware versions available)
 - Purge Redis deployment
 - Clean Redis data
 
