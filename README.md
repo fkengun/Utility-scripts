@@ -19,7 +19,7 @@ All my scripts for my research work.
 - Deploy Redis
 - Start/stop Redis deployment (NUMA-aware versions available)
 - Purge Redis deployment
-- Clean MongoDB data
+- Clean Redis data
 
 # Data analysis scripts
 - Average over runs
