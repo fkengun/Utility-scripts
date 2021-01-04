@@ -17,4 +17,8 @@ fi
 
 echo -e "${GREEN}Stopping Redis ...${NC}"
 mpssh -f ${CWD}/servers 'killall redis-server' > /dev/null
-echo -e "${GREEN}Redis is stopped${NC}"
+
+echo -e "${GREEN}Double checking redis-server process ...${NC}"
+mpssh -f ${CWD}/servers "pgrep -la redis-server" | sort
+
+echo -e "${GREEN}Please check remaining redis-server processes!!!${NC}"
