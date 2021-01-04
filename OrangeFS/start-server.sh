@@ -17,8 +17,8 @@ fi
 
 source ~/.bash_aliases
 
-PVFS2_BIN="$PVFS2_HOME/sbin/pvfs2-server"
-PVFS2_PING="$PVFS2_HOME/bin/pvfs2-ping"
+PVFS2_BIN="${PVFS2_HOME}/sbin/pvfs2-server"
+PVFS2_PING="${PVFS2_HOME}/bin/pvfs2-ping"
 
 echo -e "${GREEN}Starting OrangeFS servers ...${NC}"
 mpssh -f ${CWD}/servers "${PVFS2_BIN} ${CWD}/pvfs2-${number}N.conf -f" | sort

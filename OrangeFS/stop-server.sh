@@ -18,8 +18,8 @@ fi
 source ~/.bash_aliases
 
 echo -e "${GREEN}Stopping OrangeFS servers ...${NC}"
-mpssh -f $CWD/servers "killall -9 pvfs2-server"
-mpssh -f $CWD/servers "pgrep -al pvfs2-server"
+mpssh -f ${CWD}/servers "killall -9 pvfs2-server"
+mpssh -f ${CWD}/servers "pgrep -al pvfs2-server"
 
 echo -e "${GREEN}Double checking server process ...${NC}"
-mpssh -f $CWD/clients "pgrep -la pvfs2-server" | sort
+mpssh -f ${CWD}/clients "pgrep -la pvfs2-server" | sort
