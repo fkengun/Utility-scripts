@@ -23,3 +23,5 @@ mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "JAVA_TOOL_OPTIONS='-Xmx4G -Xms4G -Djava.
 mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "jps" | sort -u
 
 # Start Kafka
+mpssh -f ${KAFKA_SERVERS_HOSTFILE} "JAVA_TOOL_OPTIONS='-Xmx4G -Xms4G -Djava.net.preferIPv4Stack=true' nohup ${KAFKA_ROOT_DIR}/bin/kafka-server-start.sh -daemon ${KAFKA_CONF_FILE}"
+mpssh -f ${KAFKA_SERVERS_HOSTFILE} "jps" | sort -u
