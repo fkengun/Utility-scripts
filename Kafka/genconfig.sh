@@ -49,7 +49,14 @@ do
   cp ${KAFKA_ROOT_DIR}/config/server.properties ${kafka_conf_file}
   kafka_log_dir_esc=$(sed 's/\//\\&/g' <<<"${KAFKA_LOG_DIR}")
   sed -i "s/^log.dirs=.*/log.dirs=${kafka_log_dir_esc}/" ${kafka_conf_file}
-  sed -i "s/^port=.*/port=${KAFKA_PORT}/" ${kafka_conf_file}
+  if [[ ${kafka_server} == *${HOSTNAME_POSTFIX} ]]
+  then
+    kafka_server_host_name=${kafka_server}
+  else
+    kafka_server_host_name=${kafka_server}.${HOSTNAME_POSTFIX}
+  fi
+  kafka_server_ip=$(getent ahosts ${kafka_server_host_name} | grep STREAM | awk '{print $1}')
+  sed -Ei "s/^(\#)?listeners=PLAINTEXT.*/listeners=PLAINTEXT:\/\/${kafka_server_ip}:${KAFKA_PORT}/" ${kafka_conf_file}
 
   if [[ ${kafka_server} == *${HOSTNAME_POSTFIX} ]]
   then
