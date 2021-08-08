@@ -19,9 +19,22 @@ do
 done
 wait
 
-mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "JAVA_TOOL_OPTIONS='-Xmx4G -Xms4G -Djava.net.preferIPv4Stack=true' nohup ${KAFKA_ROOT_DIR}/bin/zookeeper-server-start.sh -daemon ${ZOOKEEPER_CONF_FILE}"
-mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "jps" | sort -u
+if [[ -f ${ZOOKEEPER_CONF_FILE} ]]
+then
+  mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "JAVA_TOOL_OPTIONS='-Xmx4G -Xms4G -Djava.net.preferIPv4Stack=true' nohup ${KAFKA_ROOT_DIR}/bin/zookeeper-server-start.sh -daemon ${ZOOKEEPER_CONF_FILE}"
+  mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "jps" | sort -u
+else
+  echo "Zookeeper configuration file ${ZOOKEEPER_CONF_FILE} missing, exiting ..."
+  exit
+fi
 
 # Start Kafka
-mpssh -f ${KAFKA_SERVERS_HOSTFILE} "JAVA_TOOL_OPTIONS='-Xmx4G -Xms4G -Djava.net.preferIPv4Stack=true' nohup ${KAFKA_ROOT_DIR}/bin/kafka-server-start.sh -daemon ${KAFKA_CONF_FILE}"
-mpssh -f ${KAFKA_SERVERS_HOSTFILE} "jps" | sort -u
+num_conf_files=`mpssh -f servers 'ls -l /mnt/nvme/kfeng/kafka/server.properties' 2>&1 | grep server | grep -v cannot | wc -l`
+if [[ ${num_conf_files} == ${KAFKA_N_SERVERS} ]]
+then
+  mpssh -f ${KAFKA_SERVERS_HOSTFILE} "JAVA_TOOL_OPTIONS='-Xmx4G -Xms4G -Djava.net.preferIPv4Stack=true' nohup ${KAFKA_ROOT_DIR}/bin/kafka-server-start.sh -daemon ${KAFKA_CONF_FILE}"
+  mpssh -f ${KAFKA_SERVERS_HOSTFILE} "jps" | sort -u
+else
+  echo "${num_conf_files} Kafka configuration file found, ${KAFKA_N_SERVERS} is expected, exiting ..."
+  exit
+fi

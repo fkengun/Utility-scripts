@@ -70,6 +70,6 @@ do
   ((broker_id=${broker_id}+1))
 
   sed -i "s/^zookeeper\.connect=.*/zookeeper\.connect=${kafka_zookeeper_connect}/" ${kafka_conf_file}
-  rsync -az ${kafka_conf_file} ${kafka_server}:${KAFKA_LOG_DIR}/server.properties &
+  rsync -az ${kafka_conf_file} ${kafka_server}:${KAFKA_CONF_FILE} &
 done
 wait
