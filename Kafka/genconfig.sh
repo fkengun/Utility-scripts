@@ -11,6 +11,7 @@ else
 fi
 
 # Zookeeper
+mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "mkdir -p ${ZOOKEEPER_DATA_DIR}"
 cp ${KAFKA_ROOT_DIR}/config/zookeeper.properties ${ZOOKEEPER_CONF_FILE}
 zookeeper_data_dir_esc=$(sed 's/\//\\&/g' <<<"${ZOOKEEPER_DATA_DIR}")
 sed -i "s/^dataDir=.*/dataDir=${zookeeper_data_dir_esc}/" ${ZOOKEEPER_CONF_FILE}
@@ -19,7 +20,6 @@ sed -i "s/^clientPort=.*/clientPort=${ZOOKEEPER_CLIENT_PORT}/" ${ZOOKEEPER_CONF_
 echo "tickTime=2000" >> ${ZOOKEEPER_CONF_FILE}
 echo "initLimit=10" >> ${ZOOKEEPER_CONF_FILE}
 echo "syncLimit=5" >> ${ZOOKEEPER_CONF_FILE}
-#echo "JAVA_OPTS=\"-Djava.net.preferIPv4Stack=true\"" >> ${ZOOKEEPER_CONF_FILE}
 
 id=1
 kafka_zookeeper_connect=""
@@ -42,6 +42,7 @@ do
 done
 
 # Kafka
+mpssh -f ${KAFKA_SERVERS_HOSTFILE} "mkdir -p ${KAFKA_LOG_DIR}"
 broker_id=1
 for kafka_server in ${KAFKA_SERVERS[@]}
 do
