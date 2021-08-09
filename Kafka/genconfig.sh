@@ -22,23 +22,17 @@ echo "initLimit=10" >> ${ZOOKEEPER_CONF_FILE}
 echo "syncLimit=5" >> ${ZOOKEEPER_CONF_FILE}
 
 id=1
-kafka_zookeeper_connect=""
 for zookeeper_server in ${ZOOKEEPER_SERVERS[@]}
 do
   if [[ ${zookeeper_server} == *${HOSTNAME_POSTFIX} ]]
   then
     zookeeper_server_host_name=${zookeeper_server}
   else
-    zookeeper_server_host_name=${zookeeper_server}.${HOSTNAME_POSTFIX}
+    zookeeper_server_host_name=${zookeeper_server}${HOSTNAME_POSTFIX}
   fi
   zookeeper_server_ip=$(getent ahosts ${zookeeper_server_host_name} | grep STREAM | awk '{print $1}')
   echo "server.${id}=${zookeeper_server_ip}:${ZOOKEEPER_FOLLOWER_PORT}:${ZOOKEEPER_ELECTION_PORT}" >> ${ZOOKEEPER_CONF_FILE}
   ((id=${id}+1))
-  if [[ ! -z "${kafka_zookeeper_connect}" ]]
-  then
-    kafka_zookeeper_connect="${kafka_zookeeper_connect},"
-  fi
-  kafka_zookeeper_connect="${kafka_zookeeper_connect}${zookeeper_server_ip}:${ZOOKEEPER_CLIENT_PORT}"
 done
 
 # Kafka
@@ -54,18 +48,10 @@ do
   then
     kafka_server_host_name=${kafka_server}
   else
-    kafka_server_host_name=${kafka_server}.${HOSTNAME_POSTFIX}
+    kafka_server_host_name=${kafka_server}${HOSTNAME_POSTFIX}
   fi
   kafka_server_ip=$(getent ahosts ${kafka_server_host_name} | grep STREAM | awk '{print $1}')
   sed -Ei "s/^(\#)?listeners=PLAINTEXT.*/listeners=PLAINTEXT:\/\/${kafka_server_ip}:${KAFKA_PORT}/" ${kafka_conf_file}
-
-  if [[ ${kafka_server} == *${HOSTNAME_POSTFIX} ]]
-  then
-    kafka_server_host_name=${kafka_server}
-  else
-    kafka_server_host_name=${kafka_server}.${HOSTNAME_POSTFIX}
-  fi
-  kafka_server_ip=$(getent ahosts ${kafka_server_host_name} | grep STREAM | awk '{print $1}')
   sed -i "s/^host\.name=.*/host\.name=${kafka_server_ip}/" ${kafka_conf_file}
   sed -i "s/^broker\.id=.*/broker\.id=${broker_id}/" ${kafka_conf_file}
   ((broker_id=${broker_id}+1))
