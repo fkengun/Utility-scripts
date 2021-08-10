@@ -11,8 +11,8 @@ else
 fi
 
 host_id=`hostname | cut -d'-' -f3`
-num_msgs=3000
-msg_size=524288
-num_partitions=256
+num_msgs=$1
+msg_size=$2
+num_partitions=$3
 
 ${KAFKA_ROOT_DIR}/bin/kafka-run-class.sh kafka.tools.EndToEndLatency ${kafka_bootstrap_server} end-to-end-latency-test-${num_partitions}-${host_id} ${num_msgs} 1 ${msg_size}
