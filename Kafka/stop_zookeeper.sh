@@ -10,5 +10,5 @@ else
   exit
 fi
 
-# Stop Kafka
-mpssh -f ${KAFKA_SERVERS_HOSTFILE} "jps -l | grep Kafka | cut -d' ' -f1 | xargs -r kill -9"
+# Stop Zookeeper
+mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "jps -l | grep Quorum | cut -d' ' -f1 | xargs -r kill -9"

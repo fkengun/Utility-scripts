@@ -10,8 +10,6 @@ else
   exit
 fi
 
-source ${CWD}/stop_kafka.sh
+source ${CWD}/stop_zookeeper.sh
 
 mpssh -f ${ZOOKEEPER_SERVERS_HOSTFILE} "rm -rf ${ZOOKEEPER_DATA_DIR}/*"
-mpssh -f ${KAFKA_SERVERS_HOSTFILE} "rm -rf ${KAFKA_LOG_DIR}/*"
-mpssh -f ${KAFKA_SERVERS_HOSTFILE} "rm -rf ${KAFKA_LOG_DIR}/.lock"

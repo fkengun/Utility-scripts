@@ -34,7 +34,17 @@ do
   echo "server.${id}=${zookeeper_server_ip}:${ZOOKEEPER_FOLLOWER_PORT}:${ZOOKEEPER_ELECTION_PORT}" >> ${ZOOKEEPER_CONF_FILE}
   ((id=${id}+1))
 done
+#!/bin/bash
 
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ -f ${CWD}/env.sh ]
+then
+  source ${CWD}/env.sh
+else
+  echo "env.sh does not exist, quiting ..."
+  exit
+fi
 # Kafka
 mpssh -f ${KAFKA_SERVERS_HOSTFILE} "mkdir -p ${KAFKA_LOG_DIR}"
 broker_id=1
@@ -57,6 +67,11 @@ do
   ((broker_id=${broker_id}+1))
 
   sed -i "s/^zookeeper\.connect=.*/zookeeper\.connect=${kafka_zookeeper_connect}/" ${kafka_conf_file}
+
+  #echo "num.network.threads=10" >> ${kafka_conf_file}
+  #echo "num.io.threads=32" >> ${kafka_conf_file}
+  #echo "num.background.threas=20" >> ${kafka_conf_file}
+
   rsync -az ${kafka_conf_file} ${kafka_server}:${KAFKA_CONF_FILE} &
 done
 wait
