@@ -35,17 +35,18 @@ for rep in `seq 1 ${REP}`
 do
   for num_clients in ${NUM_CLIENTS[@]}
   do
-    truncate -s 0 ${CWD}/client_hosts
-    idx=1
-    for i in `seq 1 ${num_clients}`
-    do
-      sed "${idx}q;d" ${CWD}/clients >> ${CWD}/client_hosts
-      ((idx=idx+1))
-      if [[ ${idx} > ${KAFKA_N_CLIENTS} ]]
-      then
-        idx=1
-      fi
-    done
+    ((num_clients_per_node=${num_clients}/${KAFKA_N_CLIENTS}))
+    #truncate -s 0 ${CWD}/client_hosts
+    #idx=1
+    #for i in `seq 1 ${num_clients}`
+    #do
+      #sed "${idx}q;d" ${CWD}/clients >> ${CWD}/client_hosts
+      #((idx=idx+1))
+      #if [[ ${idx} > ${KAFKA_N_CLIENTS} ]]
+      #then
+        #idx=1
+      #fi
+    #done
     for num_msgs in ${NUM_MSGS[@]}
     do
       for msg_size in ${MSG_SIZES[@]}
@@ -61,7 +62,8 @@ do
           echo "Write:"                               | tee -a read_write_test.log
           ${KAFKA_ROOT_DIR}/bin/kafka-topics.sh --create --topic simple-perf-test-${num_partitions} --partitions ${num_partitions} --config retention.ms=86400000 --bootstrap-server ${kafka_bootstrap_server} >> read_write_test.log
 
-          write_output=`mpssh -p ${num_clients} -f ${CWD}/client_hosts "${KAFKA_ROOT_DIR}/bin/kafka-producer-perf-test.sh --topic simple-perf-test-${num_partitions} --throughput -1 --num-records ${num_msgs} --record-size ${msg_size} --producer-props acks=all bootstrap.servers=${kafka_bootstrap_server}"`
+          #write_output=`mpssh -p ${num_clients} -f ${CWD}/client_hosts "${KAFKA_ROOT_DIR}/bin/kafka-producer-perf-test.sh --topic simple-perf-test-${num_partitions} --throughput -1 --num-records ${num_msgs} --record-size ${msg_size} --producer-props acks=all bootstrap.servers=${kafka_bootstrap_server}"`
+          write_output=`mpssh -f ${KAFKA_CLIENTS_HOSTFILE} "${KAFKA_ROOT_DIR}/scripts/read-write-test-local.sh write ${num_clients_per_node} ${num_partitions} ${num_msgs} ${msg_size}"`
           echo "${write_output}" >> read_write_test.log
           echo "${write_output}" | grep 99.9th | awk '{print $8}' | cut -d'(' -f2 | awk '{ SUM += $1; print $1 } END { print "Aggr BW: ", SUM }'
 
@@ -69,7 +71,8 @@ do
           mpssh -f ${CWD}/servers "sudo fm" > /dev/null 2>&1
 
           echo "Read:"
-          read_output=`mpssh -f ${CWD}/client_hosts "${KAFKA_ROOT_DIR}/bin/kafka-consumer-perf-test.sh --topic simple-perf-test-${num_partitions} --messages ${num_msgs} --bootstrap-server=${kafka_bootstrap_server} | jq -R .|jq -sr 'map(./\",\")|transpose|map(join(\": \"))[]'"`
+          #read_output=`mpssh -f ${CWD}/client_hosts "${KAFKA_ROOT_DIR}/bin/kafka-consumer-perf-test.sh --topic simple-perf-test-${num_partitions} --messages ${num_msgs} --bootstrap-server=${kafka_bootstrap_server} | jq -R .|jq -sr 'map(./\",\")|transpose|map(join(\": \"))[]'"`
+          read_output=`mpssh -f ${KAFKA_CLIENTS_HOSTFILE} "${KAFKA_ROOT_DIR}/scripts/read-write-test-local.sh read ${num_clients_per_node} ${num_partitions} ${num_msgs} ${msg_size}"`
           echo "${read_output}" >> read_write_test.log
           echo "${read_output}" | grep '\sMB.sec' | awk '{print $4}' | awk '{ SUM += $1; print $1 } END { print "Aggr BW: ", SUM }'
 
