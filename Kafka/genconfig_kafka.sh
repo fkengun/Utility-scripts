@@ -9,7 +9,6 @@ else
   echo "env.sh does not exist, quiting ..."
   exit
 fi
-
 # Kafka
 mpssh -f ${KAFKA_SERVERS_HOSTFILE} "mkdir -p ${KAFKA_LOG_DIR}"
 broker_id=1
